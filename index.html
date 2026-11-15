@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DT068 - Khử đệ quy duyệt cây bằng ngăn xếp thông minh</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #1557b0;
+            --success: #0d9488;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --highlight: #fef3c7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a73e8 0%, #6366f1 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .header .info-row {
+            margin-top: 0.8rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab:hover { color: var(--primary); }
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            margin: 1rem 0 0.5rem;
+            color: var(--text);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        /* Input Section */
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group textarea, select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus, .input-group textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .btn {
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        .btn-success:hover { background: #0f766e; }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover { background: rgba(26,115,232,0.05); }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        /* Output */
+        .output-box {
+            background: var(--code-bg);
+            color: #a5f3fc;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .output-box .step { color: #93c5fd; }
+        .output-box .node { color: #fbbf24; font-weight: bold; }
+        .output-box .stack-state { color: #86efac; }
+        .output-box .result { color: #f472b6; }
+        .output-box .match { color: #4ade80; font-weight: bold; }
+        .output-box .mismatch { color: #f87171; font-weight: bold; }
+
+        /* Tree Visualization */
+        .tree-canvas-container {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 1rem;
+            text-align: center;
+            min-height: 300px;
+            overflow: auto;
+        }
+
+        canvas#treeCanvas {
+            max-width: 100%;
+        }
+
+        /* Step-by-step animation */
+        .step-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .step-info {
+            background: var(--highlight);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--warning);
+            margin: 0.5rem 0;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        tr:nth-child(even) { background: #f8fafc; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        /* Code block */
+        .code-block {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .code-block .keyword { color: #c084fc; }
+        .code-block .func { color: #67e8f9; }
+        .code-block .comment { color: #6b7280; font-style: italic; }
+        .code-block .string { color: #86efac; }
+        .code-block .number { color: #fbbf24; }
+
+        /* Alert boxes */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            color: #166534;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .preset-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-card:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .preset-card h4 {
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .preset-card p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stack visualization */
+        .stack-visual {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 2px;
+            min-height: 60px;
+            padding: 0.5rem;
+        }
+
+        .stack-item {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            min-width: 40px;
+            text-align: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .stack-item.popped {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            animation: slideOut 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(50px); opacity: 0; }
+        }
+
+        .visited-nodes {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .visited-node {
+            background: #dcfce7;
+            color: #166534;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        /* Smooth transitions */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🌳 DT068 — Khử đệ quy duyệt cây bằng ngăn xếp thông minh</h1>
+    <div class="subtitle">Chương 5, Mục 5.3.5: Ứng dụng khử đệ quy — Trang 129–130 (PDF 141–142)</div>
+    <div class="info-row">
+        <span>📚 Môn: Cấu trúc dữ liệu & Giải thuật (INT13185)</span>
+        <span>👨‍🎓 Nguyễn Trường Tân — N24DCDT083</span>
+        <span>👨‍🏫 GV: Hồ Nhựt Minh — Nhóm 03</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('run')">▶️ Chạy chương trình</button>
+        <button class="tab" onclick="switchTab('stepbystep')">🔍 Duyệt từng bước</button>
+        <button class="tab" onclick="switchTab('theory')">📖 Lý thuyết</button>
+        <button class="tab" onclick="switchTab('code')">💻 Mã nguồn C++</button>
+        <button class="tab" onclick="switchTab('analysis')">📊 Phân tích</button>
+    </div>
+
+    <!-- ==================== TAB 1: CHẠY CHƯƠNG TRÌNH ==================== -->
+    <div id="tab-run" class="tab-content active">
+        <div class="grid-2">
+            <div>
+                <div class="card">
+                    <h2>📥 Nhập dữ liệu cây</h2>
+
+                    <div class="input-group">
+                        <label>Chọn ví dụ có sẵn:</label>
+                        <select id="presetSelect" onchange="loadPreset()">
+                            <option value="">— Tự nhập —</option>
+                            <option value="ex1">Ví dụ 1 (đề bài): goc=1, con[1]=[2,3], con[2]=[4]</option>
+                            <option value="ex2">Ví dụ 2 (đề bài): goc=1, con[1]=[]</option>
+                            <option value="tc1">Nấm cả 1: Cây 1 nút → [1]</option>
+                            <option value="tc2">Nấm cả 2: 1 có con [2,3] → [1,2,3]</option>
+                            <option value="tc3">Nấm cả 3: Dây 1→2→3→4 → [1,2,3,4]</option>
+                            <option value="tc4">Nấm cả 4: 1:[3,2], 3:[4] → [1,3,4,2]</option>
+                            <option value="tc5">Nấm cả 5: 1:[2,3], 2:[4,5] → [1,2,4,5,3]</option>
+                            <option value="tree5">Cây 5 nhánh (6 nút)</option>
+                            <option value="tree20">Cây 20 nút phức tạp</option>
+                            <option value="tree100">Cây 100 nút (dây xích)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Nút gốc:</label>
+                        <input type="number" id="rootInput" value="1" min="1" max="100">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Danh sách con (mỗi dòng: <code>nút: con1 con2 ...</code>):</label>
+                        <textarea id="childrenInput" placeholder="Ví dụ:&#10;1: 2 3&#10;2: 4&#10;(Nút lá không cần khai báo)">1: 2 3
+2: 4</textarea>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runBothTraversals()">▶️ Chạy cả hai phương pháp</button>
+                        <button class="btn btn-outline" onclick="clearAll()">🗑️ Xóa</button>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Hướng dẫn nhập:</strong> Mỗi dòng ghi <code>nút: con1 con2 con3</code>.<br>
+                        Nút lá (không có con) không cần khai báo. Thứ tự con quan trọng.
+                    </div>
+                </div>
+
+                <!-- Tree Visualization -->
+                <div class="card">
+                    <h2>🌳 Hình ảnh cây</h2>
+                    <div class="tree-canvas-container">
+                        <canvas id="treeCanvas" width="700" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <!-- Recursive Output -->
+                <div class="card">
+                    <h2>🔄 Phương pháp 1: Duyệt đệ quy</h2>
+                    <div class="code-block" style="font-size:0.8rem; color:#93c5fd;">
+                        <span class="comment">// Giáo trình: duyet_sau_de_quy(cay, goc)</span><br>
+                        <span class="keyword">void</span> <span class="func">duyet_de_quy</span>(<span class="keyword">int</span> node) {<br>
+                        &nbsp;&nbsp;ketqua.<span class="func">push_back</span>(node); <span class="comment">// Thăm nút</span><br>
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">auto</span> child : con[node])<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="func">duyet_de_quy</span>(child); <span class="comment">// Đệ quy từng con</span><br>
+                        }
+                    </div>
+                    <div id="outputRecursive" class="output-box" style="margin-top:0.8rem; min-height:150px;">
+                        <span style="color:#64748b;">Nhấn "Chạy cả hai phương pháp" để xem kết quả...</span>
+                    </div>
+                </div>
+
+                <!-- Stack Output -->
+                <div class="card">
+                    <h2>📚 Phương pháp 2: Duyệt bằng ngăn xếp thông minh</h2>
+                    <div class="code-block" style="font-size:0.8rem; color:#93c5fd;">
+                        <span class="comment">// Giáo trình: duyet_khu_de_quy(cay, goc)</span><br>
+                        <span class="keyword">void</span> <span class="func">duyet_stack</span>(<span class="keyword">int</span> root) {<br>
+                        &nbsp;&nbsp;stack st; st.<span class="func">push</span>(root);<br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!st.<span class="func">empty</span>()) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">int</span> u = st.<span class="func">top</span>(); st.<span class="func">pop</span>();<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;ketqua.<span class="func">push_back</span>(u); <span class="comment">// Thăm</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span> (i = con[u].size()-1; i>=0; i--)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;st.<span class="func">push</span>(con[u][i]); <span class="comment">// Push ngược!</span><br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                    <div id="outputStack" class="output-box" style="margin-top:0.8rem; min-height:150px;">
+                        <span style="color:#64748b;">Nhấn "Chạy cả hai phương pháp" để xem kết quả...</span>
+                    </div>
+                </div>
+
+                <!-- Comparison -->
+                <div class="card" id="comparisonCard" style="display:none;">
+                    <h2>⚖️ So sánh kết quả</h2>
+                    <div id="comparisonResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 2: DUYỆT TỪNG BƯỚC ==================== -->
+    <div id="tab-stepbystep" class="tab-content">
+        <div class="card">
+            <h2>🔍 Mô phỏng duyệt từng bước bằng ngăn xếp</h2>
+            <p style="color:var(--text-secondary); margin-bottom:1rem;">
+                Chọn ví dụ ở tab "Chạy chương trình" trước, rồi quay lại đây để xem từng bước.
+            </p>
+
+            <div class="step-controls">
+                <button class="btn btn-primary" onclick="stepReset()">⏮ Bắt đầu lại</button>
+                <button class="btn btn-success" onclick="stepNext()">⏩ Bước tiếp</button>
+                <button class="btn btn-warning" onclick="stepAutoPlay()">▶️ Tự chạy</button>
+                <button class="btn btn-outline" onclick="stepStop()">⏹ Dừng</button>
+                <span id="stepCounter" style="margin-left:1rem; font-weight:600;">Bước: 0</span>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <div class="card">
+                    <h2>📚 Trạng thái ngăn xếp (Stack)</h2>
+                    <div id="stepInfo" class="step-info">Nhấn "Bước tiếp" để bắt đầu...</div>
+                    <div style="display:flex; gap:2rem; margin-top:1rem; align-items:flex-start;">
+                        <div>
+                            <div style="font-weight:600; margin-bottom:0.5rem; text-align:center;">Đỉnh ↑</div>
+                            <div id="stackVisual" class="stack-visual" style="min-width:80px; border:2px solid var(--border); border-radius:8px; padding:0.5rem;">
+                                <div style="color:var(--text-secondary); font-size:0.8rem;">Rỗng</div>
+                            </div>
+                            <div style="font-weight:600; margin-top:0.5rem; text-align:center;">Đáy ↓</div>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600; margin-bottom:0.5rem;">Đã thăm:</div>
+                            <div id="visitedVisual" class="visited-nodes">
+                                <span style="color:var(--text-secondary); font-size:0.85rem;">Chưa có</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="card">
+                    <h2>📝 Nhật ký các bước</h2>
+                    <div id="stepLog" class="output-box" style="min-height:300px;">
+                        <span style="color:#64748b;">Nhật ký sẽ xuất hiện ở đây...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 3: LÝ THUYẾT ==================== -->
+    <div id="tab-theory" class="tab-content">
+        <div class="card">
+            <h2>📖 Cơ sở lý thuyết — Giáo trình trang 129–130 (PDF 141–142)</h2>
+
+            <div class="alert alert-info">
+                <strong>Trích dẫn giáo trình (Mục 5.3.5):</strong><br>
+                "Mọi thuật toán đệ quy đều viết lại được bằng vòng lặp cộng một ngăn xếp, vì bản thân cơ chế
+                đệ quy của ngôn ngữ cũng dùng ngăn xếp lời gọi. Kỹ thuật này cần đến khi độ sâu đệ quy vượt
+                giới hạn của ngôn ngữ, như đã nêu ở mục 3.3."
+            </div>
+
+            <h3>1. Duyệt cây bằng đệ quy (Preorder — Duyệt trước)</h3>
+            <p>Hàm <code>duyet_sau_de_quy</code> trong giáo trình (tên hơi gây nhầm, thực ra là duyệt trước):</p>
+            <div class="code-block" style="margin:0.8rem 0;">
+<span class="comment"># Python — Giáo trình</span>
+<span class="keyword">def</span> <span class="func">duyet_sau_de_quy</span>(cay, goc):
+    <span class="keyword">if</span> goc <span class="keyword">is not</span> <span class="keyword">None</span>:
+        <span class="func">print</span>(goc, end=<span class="string">" "</span>)       <span class="comment"># Thăm nút TRƯỚC</span>
+        <span class="keyword">for</span> con <span class="keyword">in</span> cay[goc]:
+            <span class="func">duyet_sau_de_quy</span>(cay, con)  <span class="comment"># Đệ quy từng con</span>
+            </div>
+
+            <h3>2. Khử đệ quy bằng ngăn xếp (Stack)</h3>
+            <p>Hàm <code>duyet_khu_de_quy</code> — thay đệ quy bằng vòng lặp + stack:</p>
+            <div class="code-block" style="margin:0.8rem 0;">
+<span class="comment"># Python — Giáo trình</span>
+<span class="keyword">def</span> <span class="func">duyet_khu_de_quy</span>(cay, goc):
+    st = [goc]
+    <span class="keyword">while</span> st:
+        u = st.<span class="func">pop</span>()
+        <span class="func">print</span>(u, end=<span class="string">" "</span>)
+        <span class="keyword">for</span> con <span class="keyword">in</span> <span class="func">reversed</span>(cay[u]):  <span class="comment"># đảo để thứ tự duyệt không đổi</span>
+            st.<span class="func">append</span>(con)
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>Chi tiết quan trọng (trang 142):</strong><br>
+                "Ngăn xếp lấy ra theo thứ tự ngược với thứ tự đưa vào, nên muốn giữ nguyên thứ tự duyệt của bản đệ quy,
+                phải đẩy các con vào theo thứ tự ngược lại."<br><br>
+                Ví dụ: <code>con = [2, 3]</code> → push <strong>3 trước, rồi 2</strong> → pop ra <strong>2 trước</strong> ✓
+            </div>
+
+            <h3>3. Tại sao phải push ngược (reversed)?</h3>
+            <table style="margin:0.8rem 0;">
+                <tr><th>Hành động</th><th>Không đảo</th><th>Có đảo (reversed) ✓</th></tr>
+                <tr>
+                    <td>Con của nút 1: [2, 3]</td>
+                    <td>Push 2, Push 3<br>Stack: [3, 2] (đỉnh=3)</td>
+                    <td>Push 3, Push 2<br>Stack: [2, 3] (đỉnh=2)</td>
+                </tr>
+                <tr>
+                    <td>Pop tiếp</td>
+                    <td>Pop 3 → thăm 3 trước ✗</td>
+                    <td>Pop 2 → thăm 2 trước ✓</td>
+                </tr>
+            </table>
+
+            <h3>4. Cơ chế đệ quy và ngăn xếp lời gọi (Mục 3.3.4)</h3>
+            <p>Mỗi lời gọi hàm chiếm một <em>khung (frame)</em> trên ngăn xếp lời gọi, chứa tham số, biến cục bộ và
+            địa chỉ trở về. Bộ nhớ tỷ lệ với <strong>độ sâu cây đệ quy</strong>, không phải tổng số lời gọi.</p>
+
+            <table style="margin:0.8rem 0;">
+                <tr><th>Ngôn ngữ</th><th>Giới hạn mặc định</th><th>Cách mở rộng</th></tr>
+                <tr><td>Python</td><td>1000 lời gọi lồng</td><td><code>sys.setrecursionlimit(10**6)</code></td></tr>
+                <tr><td>C++</td><td>~10⁵–10⁶ (tùy frame)</td><td>Tăng stack size hoặc <strong>khử đệ quy</strong></td></tr>
+            </table>
+
+            <h3>5. Biểu diễn cây</h3>
+            <p>Cây tổng quát (general tree) biểu diễn bằng <strong>danh sách kề</strong> (adjacency list):
+            <code>con[i]</code> = mảng các nút con của nút <code>i</code>. Mỗi nút có thể có bao nhiêu con tùy ý (1 ≤ n ≤ 100).</p>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 4: MÃ NGUỒN C++ ==================== -->
+    <div id="tab-code" class="tab-content">
+        <div class="card">
+            <h2>💻 Mã nguồn C++ — DT068_KhuDeQuy.cpp</h2>
+            <div class="alert alert-info">
+                File: <code>DT068_KhuDeQuy.cpp</code> — Biên dịch: <code>g++ -o DT068 DT068_KhuDeQuy.cpp</code> — Chạy: <code>./DT068</code>
+            </div>
+            <div id="cppCodeDisplay" class="code-block" style="max-height:600px; overflow-y:auto; font-size:0.82rem;"></div>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 5: PHÂN TÍCH ==================== -->
+    <div id="tab-analysis" class="tab-content">
+        <div class="card">
+            <h2>📊 Bảng kết quả các ví dụ và nấm cả kiểm tra</h2>
+            <div id="allTestsResult"></div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="runAllTests()">▶️ Chạy tất cả test cases</button>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h2>📈 Phân tích độ phức tạp</h2>
+                <table>
+                    <tr><th>Tiêu chí</th><th>Đệ quy</th><th>Ngăn xếp</th></tr>
+                    <tr><td>Thời gian</td><td>O(n)</td><td>O(n)</td></tr>
+                    <tr><td>Bộ nhớ</td><td>O(h) — call stack</td><td>O(h) — stack tường minh</td></tr>
+                    <tr><td>Giới hạn độ sâu</td><td>Giới hạn bởi hệ thống</td><td>Giới hạn bởi heap</td></tr>
+                    <tr><td>Kiểm soát luồng</td><td>Khó dừng giữa chừng</td><td>Dễ dừng/tiếp tục</td></tr>
+                    <tr><td>Dễ đọc code</td><td>✓ Tự nhiên hơn</td><td>Phức tạp hơn</td></tr>
+                </table>
+                <p style="margin-top:1rem; font-size:0.9rem;">
+                    Trong đó: <strong>n</strong> = tổng số nút, <strong>h</strong> = chiều cao cây.<br>
+                    Đếm: mỗi nút lấy stack 1 lần + push các con 1 lần → mỗi cạnh cha-con duyệt đúng 1 lần.
+                </p>
+            </div>
+
+            <div class="card">
+                <h2>📝 Nhận xét tổng hợp</h2>
+                <ol style="font-size:0.9rem; padding-left:1.2rem;">
+                    <li><strong>Hai phương pháp cho kết quả giống nhau</strong> trên mọi test case, chứng minh tính đúng đắn của thuật toán khử đệ quy.</li>
+                    <li><strong>Trick "reversed"</strong> (push con từ phải sang trái) là chi tiết then chốt giữ đúng thứ tự duyệt.</li>
+                    <li><strong>Cả hai đều O(n)</strong> thời gian; stack tường minh có thể O(n) bộ nhớ trong trường hợp xấu (cây suy biến thành dây xích).</li>
+                    <li><strong>Khử đệ quy</strong> quan trọng khi cây sâu (>10⁵ nút) vì tránh tràn call stack.</li>
+                    <li>Thử nghiệm thành công với cây <strong>5, 20, 100</strong> nút.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    DT068 — Khử đệ quy duyệt cây bằng ngăn xếp thông minh &nbsp;|&nbsp;
+    Nguyễn Trường Tân — N24DCDT083 &nbsp;|&nbsp;
+    Cấu trúc dữ liệu & Giải thuật (INT13185) &nbsp;|&nbsp;
+    GV: Hồ Nhựt Minh — Nhóm 03
+</div>
+
+<script>
+// ============================================================================
+// DỮ LIỆU & TRẠNG THÁI
+// ============================================================================
+
+let tree = {};       // tree[node] = [children]
+let rootNode = 1;
+let allNodes = new Set();
+
+// Step-by-step state
+let stepStack = [];
+let stepVisited = [];
+let stepLog_ = [];
+let stepIndex = 0;
+let autoPlayTimer = null;
+
+// ============================================================================
+// PRESET DATA
+// ============================================================================
+
+const presets = {
+    ex1: { root: 1, children: "1: 2 3\n2: 4", expected: [1,2,4,3] },
+    ex2: { root: 1, children: "", expected: [1] },
+    tc1: { root: 1, children: "", expected: [1] },
+    tc2: { root: 1, children: "1: 2 3", expected: [1,2,3] },
+    tc3: { root: 1, children: "1: 2\n2: 3\n3: 4", expected: [1,2,3,4] },
+    tc4: { root: 1, children: "1: 3 2\n3: 4", expected: [1,3,4,2] },
+    tc5: { root: 1, children: "1: 2 3\n2: 4 5", expected: [1,2,4,5,3] },
+    tree5: { root: 1, children: "1: 2 3 4 5 6", expected: [1,2,3,4,5,6] },
+    tree20: {
+        root: 1,
+        children: "1: 2 3 4\n2: 5 6\n3: 7 8 9\n4: 10\n5: 11 12\n7: 13 14\n9: 15 16 17\n10: 18 19 20",
+        expected: [1,2,5,11,12,6,3,7,13,14,8,9,15,16,17,4,10,18,19,20]
+    },
+    tree100: {
+        root: 1,
+        children: Array.from({length:99}, (_,i) => `${i+1}: ${i+2}`).join("\n"),
+        expected: Array.from({length:100}, (_,i) => i+1)
+    }
+};
+
+// ============================================================================
+// TAB SWITCHING
+// ============================================================================
+
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+    const tabs = document.querySelectorAll('.tab');
+    const names = ['run','stepbystep','theory','code','analysis'];
+    const idx = names.indexOf(name);
+    if (idx >= 0) tabs[idx].classList.add('active');
+
+    document.getElementById('tab-' + name).classList.add('active');
+
+    if (name === 'code') loadCppCode();
+}
+
+// ============================================================================
+// PARSE INPUT
+// ============================================================================
+
+function parseInput() {
+    tree = {};
+    allNodes = new Set();
+    rootNode = parseInt(document.getElementById('rootInput').value) || 1;
+    allNodes.add(rootNode);
+    tree[rootNode] = tree[rootNode] || [];
+
+    const lines = document.getElementById('childrenInput').value.trim().split('\n');
+    for (const line of lines) {
+        if (!line.trim()) continue;
+        const parts = line.split(':');
+        if (parts.length < 2) continue;
+        const parent = parseInt(parts[0].trim());
+        const children = parts[1].trim().split(/\s+/).map(Number).filter(n => !isNaN(n) && n > 0);
+        tree[parent] = children;
+        allNodes.add(parent);
+        children.forEach(c => { allNodes.add(c); if (!tree[c]) tree[c] = []; });
+    }
+
+    if (!tree[rootNode]) tree[rootNode] = [];
+}
+
+function loadPreset() {
+    const key = document.getElementById('presetSelect').value;
+    if (!key) return;
+    const p = presets[key];
+    document.getElementById('rootInput').value = p.root;
+    document.getElementById('childrenInput').value = p.children;
+}
+
+function clearAll() {
+    document.getElementById('presetSelect').value = '';
+    document.getElementById('rootInput').value = 1;
+    document.getElementById('childrenInput').value = '';
+    document.getElementById('outputRecursive').innerHTML = '<span style="color:#64748b;">Đã xóa.</span>';
+    document.getElementById('outputStack').innerHTML = '<span style="color:#64748b;">Đã xóa.</span>';
+    document.getElementById('comparisonCard').style.display = 'none';
+    const ctx = document.getElementById('treeCanvas').getContext('2d');
+    ctx.clearRect(0, 0, 700, 400);
+}
+
+// ============================================================================
+// DUYỆT ĐỆ QUY
+// ============================================================================
+
+function traverseRecursive(node, depth, result, log) {
+    result.push(node);
+    const indent = '  '.repeat(depth);
+    const isLeaf = !tree[node] || tree[node].length === 0;
+    log.push(`${indent}Thăm nút <span class="node">${node}</span>${isLeaf ? ' (lá)' : ''} | Kết quả: <span class="result">[${result.join(',')}]</span>`);
+
+    if (tree[node]) {
+        for (const child of tree[node]) {
+            traverseRecursive(child, depth + 1, result, log);
+        }
+    }
+}
+
+// ============================================================================
+// DUYỆT BẰNG NGĂN XẾP THÔNG MINH
+// ============================================================================
+
+function traverseStack(root) {
+    const stack = [root];
+    const result = [];
+    const log = [];
+    let step = 0;
+
+    log.push(`<span class="step">Bước 0:</span> Khởi tạo stack với nút gốc <span class="node">${root}</span>`);
+    log.push(`  <span class="stack-state">Stack: [${stack.join(', ')}]</span>\n`);
+
+    while (stack.length > 0) {
+        step++;
+        const u = stack.pop();
+        result.push(u);
+
+        log.push(`<span class="step">Bước ${step}:</span> Pop nút <span class="node">${u}</span> → Thăm`);
+        log.push(`  Kết quả: <span class="result">[${result.join(',')}]</span>`);
+
+        if (tree[u] && tree[u].length > 0) {
+            log.push(`  Con của ${u}: [${tree[u].join(', ')}] → Push ngược: ${[...tree[u]].reverse().join(', ')}`);
+            for (let i = tree[u].length - 1; i >= 0; i--) {
+                stack.push(tree[u][i]);
+            }
+        } else {
+            log.push(`  Nút ${u} là nút lá (không có con)`);
+        }
+
+        log.push(`  <span class="stack-state">Stack: [${stack.join(', ')}]</span>`);
+        log.push(`  Độ sâu stack: ${stack.length}\n`);
+    }
+
+    return { result, log };
+}
+
+// ============================================================================
+// CHẠY CẢ HAI PHƯƠNG PHÁP
+// ============================================================================
+
+function runBothTraversals() {
+    parseInput();
+
+    // 1. Đệ quy
+    const recResult = [];
+    const recLog = [];
+    traverseRecursive(rootNode, 0, recResult, recLog);
+    document.getElementById('outputRecursive').innerHTML =
+        recLog.join('\n') +
+        `\n\n<span class="match">✅ Kết quả đệ quy: [${recResult.join(',')}]</span>` +
+        `\nSố nút đã thăm: ${recResult.length}`;
+
+    // 2. Stack
+    const stackData = traverseStack(rootNode);
+    document.getElementById('outputStack').innerHTML =
+        stackData.log.join('\n') +
+        `\n<span class="match">✅ Kết quả stack: [${stackData.result.join(',')}]</span>` +
+        `\nSố nút đã thăm: ${stackData.result.length}`;
+
+    // 3. So sánh
+    const card = document.getElementById('comparisonCard');
+    card.style.display = 'block';
+    card.classList.add('fade-in');
+    const match = JSON.stringify(recResult) === JSON.stringify(stackData.result);
+
+    let compareHTML = `<table>
+        <tr><th>Phương pháp</th><th>Kết quả</th><th>Số nút</th></tr>
+        <tr><td>Đệ quy</td><td>[${recResult.join(',')}]</td><td>${recResult.length}</td></tr>
+        <tr><td>Ngăn xếp</td><td>[${stackData.result.join(',')}]</td><td>${stackData.result.length}</td></tr>
+    </table>`;
+
+    if (match) {
+        compareHTML += `<div class="alert alert-success" style="margin-top:1rem;">
+            <strong>✅ TRÙNG KHỚP!</strong> Hai phương pháp cho kết quả giống nhau hoàn toàn.
+        </div>`;
+    } else {
+        compareHTML += `<div class="alert" style="background:#fef2f2;border-left:4px solid #ef4444;color:#991b1b;margin-top:1rem;">
+            <strong>❌ KHÔNG TRÙNG!</strong> Có sai khác — cần kiểm tra lại.
+        </div>`;
+    }
+
+    // Check against expected
+    const selVal = document.getElementById('presetSelect').value;
+    if (selVal && presets[selVal] && presets[selVal].expected) {
+        const exp = presets[selVal].expected;
+        const expMatch = JSON.stringify(recResult) === JSON.stringify(exp);
+        if (expMatch) {
+            compareHTML += `<div class="alert alert-success">
+                <strong>✅ Đúng với kết quả mong đợi:</strong> [${exp.join(',')}]
+            </div>`;
+        } else {
+            compareHTML += `<div class="alert" style="background:#fef2f2;border-left:4px solid #ef4444;color:#991b1b;">
+                <strong>⚠️ Khác với kết quả mong đợi:</strong> [${exp.join(',')}]
+            </div>`;
+        }
+    }
+
+    document.getElementById('comparisonResult').innerHTML = compareHTML;
+
+    // Draw tree
+    drawTree();
+
+    // Prepare step-by-step data
+    stepReset();
+}
+
+// ============================================================================
+// VẼ CÂY (Canvas)
+// ============================================================================
+
+function drawTree() {
+    const canvas = document.getElementById('treeCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Calculate tree layout
+    const positions = {};
+    const nodeCount = allNodes.size;
+
+    // If tree is too big, skip drawing
+    if (nodeCount > 50) {
+        canvas.height = 100;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '14px Segoe UI';
+        ctx.fillStyle = '#64748b';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Cây có ${nodeCount} nút — quá lớn để vẽ trực quan.`, canvas.width/2, 50);
+        return;
+    }
+
+    // BFS to find levels
+    const levels = {};
+    const queue = [{ node: rootNode, level: 0 }];
+    const visited = new Set();
+    let maxLevel = 0;
+
+    while (queue.length > 0) {
+        const { node, level } = queue.shift();
+        if (visited.has(node)) continue;
+        visited.add(node);
+        if (!levels[level]) levels[level] = [];
+        levels[level].push(node);
+        maxLevel = Math.max(maxLevel, level);
+        if (tree[node]) {
+            for (const child of tree[node]) {
+                queue.push({ node: child, level: level + 1 });
+            }
+        }
+    }
+
+    // Calculate positions
+    let maxWidth = 0;
+    for (const lvl in levels) maxWidth = Math.max(maxWidth, levels[lvl].length);
+
+    const nodeRadius = 20;
+    const levelHeight = 70;
+    const canvasWidth = Math.max(700, maxWidth * 60 + 60);
+    const canvasHeight = (maxLevel + 1) * levelHeight + 80;
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // Position nodes
+    // Use a recursive approach for better layout
+    const subtreeWidth = {};
+
+    function calcWidth(node, visited_set) {
+        if (visited_set.has(node)) return 1;
+        visited_set.add(node);
+        const children = tree[node] || [];
+        if (children.length === 0) {
+            subtreeWidth[node] = 1;
+            return 1;
+        }
+        let w = 0;
+        for (const c of children) w += calcWidth(c, visited_set);
+        subtreeWidth[node] = Math.max(w, 1);
+        return subtreeWidth[node];
+    }
+
+    calcWidth(rootNode, new Set());
+
+    function layoutNode(node, x, y, width, vis) {
+        if (vis.has(node)) return;
+        vis.add(node);
+        positions[node] = { x, y };
+        const children = tree[node] || [];
+        if (children.length === 0) return;
+
+        let totalW = 0;
+        for (const c of children) totalW += (subtreeWidth[c] || 1);
+
+        let cx = x - width / 2;
+        for (const c of children) {
+            const cw = (subtreeWidth[c] || 1) / totalW * width;
+            layoutNode(c, cx + cw / 2, y + levelHeight, cw, vis);
+            cx += cw;
+        }
+    }
+
+    layoutNode(rootNode, canvasWidth / 2, 40, canvasWidth - 60, new Set());
+
+    // Draw edges
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    for (const node in tree) {
+        const n = parseInt(node);
+        if (!positions[n]) continue;
+        for (const child of tree[n]) {
+            if (!positions[child]) continue;
+            ctx.beginPath();
+            ctx.moveTo(positions[n].x, positions[n].y + nodeRadius);
+            ctx.lineTo(positions[child].x, positions[child].y - nodeRadius);
+            ctx.stroke();
+        }
+    }
+
+    // Draw nodes
+    for (const node in positions) {
+        const { x, y } = positions[node];
+        const n = parseInt(node);
+        const isLeaf = !tree[n] || tree[n].length === 0;
+
+        // Circle
+        ctx.beginPath();
+        ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+        ctx.fillStyle = n === rootNode ? '#1a73e8' : (isLeaf ? '#f59e0b' : '#6366f1');
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(n.toString(), x, y);
+    }
+
+    // Legend
+    const legendY = canvasHeight - 25;
+    ctx.font = '12px Segoe UI';
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'left';
+
+    ctx.beginPath(); ctx.arc(20, legendY, 8, 0, Math.PI*2); ctx.fillStyle='#1a73e8'; ctx.fill();
+    ctx.fillStyle='#64748b'; ctx.fillText('Gốc', 33, legendY+4);
+
+    ctx.beginPath(); ctx.arc(80, legendY, 8, 0, Math.PI*2); ctx.fillStyle='#6366f1'; ctx.fill();
+    ctx.fillStyle='#64748b'; ctx.fillText('Nút trong', 93, legendY+4);
+
+    ctx.beginPath(); ctx.arc(170, legendY, 8, 0, Math.PI*2); ctx.fillStyle='#f59e0b'; ctx.fill();
+    ctx.fillStyle='#64748b'; ctx.fillText('Nút lá', 183, legendY+4);
+}
+
+// ============================================================================
+// DUYỆT TỪNG BƯỚC (Step-by-step Animation)
+// ============================================================================
+
+function stepReset() {
+    parseInput();
+    stepStack = [rootNode];
+    stepVisited = [];
+    stepLog_ = [];
+    stepIndex = 0;
+    if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; }
+
+    document.getElementById('stepCounter').textContent = 'Bước: 0 (Khởi tạo)';
+    document.getElementById('stepInfo').innerHTML =
+        `Đã khởi tạo stack với nút gốc <strong>${rootNode}</strong>. Nhấn "Bước tiếp" để bắt đầu duyệt.`;
+    updateStackVisual();
+    document.getElementById('visitedVisual').innerHTML = '<span style="color:var(--text-secondary); font-size:0.85rem;">Chưa có</span>';
+    document.getElementById('stepLog').innerHTML = `<span class="step">Khởi tạo:</span> Push nút gốc <span class="node">${rootNode}</span> vào stack\n<span class="stack-state">Stack: [${rootNode}]</span>\n`;
+}
+
+function stepNext() {
+    if (stepStack.length === 0) {
+        document.getElementById('stepInfo').innerHTML =
+            '<strong style="color:#22c55e;">✅ Hoàn thành!</strong> Stack đã rỗng — duyệt xong tất cả nút.';
+        if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; }
+        return;
+    }
+
+    stepIndex++;
+    const u = stepStack.pop();
+    stepVisited.push(u);
+
+    let logEntry = `<span class="step">Bước ${stepIndex}:</span> Pop <span class="node">${u}</span> → Thăm\n`;
+    logEntry += `  Đã thăm: <span class="result">[${stepVisited.join(',')}]</span>\n`;
+
+    let infoHTML = `<strong>Bước ${stepIndex}:</strong> Lấy nút <strong>${u}</strong> ra khỏi đỉnh stack và thăm.<br>`;
+
+    if (tree[u] && tree[u].length > 0) {
+        const reversed = [...tree[u]].reverse();
+        logEntry += `  Con của ${u}: [${tree[u].join(', ')}]\n`;
+        logEntry += `  Push ngược: ${reversed.join(', ')}\n`;
+        infoHTML += `Con: [${tree[u].join(', ')}] → Push vào stack theo thứ tự ngược: <strong>${reversed.join(', ')}</strong><br>`;
+        for (const c of reversed) {
+            stepStack.push(c);
+        }
+    } else {
+        logEntry += `  Nút ${u} là nút lá\n`;
+        infoHTML += `Nút <strong>${u}</strong> là nút lá — không push gì thêm.`;
+    }
+
+    logEntry += `  <span class="stack-state">Stack: [${stepStack.join(', ')}]</span>\n`;
+    infoHTML += `<br>Stack hiện tại: <code>[${stepStack.join(', ')}]</code>`;
+
+    document.getElementById('stepCounter').textContent = `Bước: ${stepIndex}`;
+    document.getElementById('stepInfo').innerHTML = infoHTML;
+
+    const logEl = document.getElementById('stepLog');
+    logEl.innerHTML += logEntry + '\n';
+    logEl.scrollTop = logEl.scrollHeight;
+
+    updateStackVisual();
+    updateVisitedVisual();
+}
+
+function stepAutoPlay() {
+    if (autoPlayTimer) return;
+    autoPlayTimer = setInterval(() => {
+        if (stepStack.length === 0) {
+            clearInterval(autoPlayTimer);
+            autoPlayTimer = null;
+            return;
+        }
+        stepNext();
+    }, 1000);
+}
+
+function stepStop() {
+    if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; }
+}
+
+function updateStackVisual() {
+    const el = document.getElementById('stackVisual');
+    if (stepStack.length === 0) {
+        el.innerHTML = '<div style="color:var(--text-secondary); font-size:0.8rem;">Rỗng</div>';
+        return;
+    }
+    el.innerHTML = stepStack.map((n, i) =>
+        `<div class="stack-item" style="animation-delay:${i*0.05}s">${n}</div>`
+    ).join('');
+}
+
+function updateVisitedVisual() {
+    const el = document.getElementById('visitedVisual');
+    el.innerHTML = stepVisited.map(n =>
+        `<span class="visited-node">${n}</span>`
+    ).join('');
+}
+
+// ============================================================================
+// CHẠY TẤT CẢ TEST CASES
+// ============================================================================
+
+function runAllTests() {
+    const testCases = [
+        { name: 'Ví dụ 1 (đề bài)', key: 'ex1', desc: 'goc=1, con[1]=[2,3], con[2]=[4]' },
+        { name: 'Ví dụ 2 (đề bài)', key: 'ex2', desc: 'goc=1, con[1]=[]' },
+        { name: 'Nấm cả 1', key: 'tc1', desc: 'Cây 1 nút' },
+        { name: 'Nấm cả 2', key: 'tc2', desc: '1 có con [2,3]' },
+        { name: 'Nấm cả 3', key: 'tc3', desc: 'Dây 1→2→3→4' },
+        { name: 'Nấm cả 4', key: 'tc4', desc: '1:[3,2], 3:[4]' },
+        { name: 'Nấm cả 5', key: 'tc5', desc: '1:[2,3], 2:[4,5]' },
+        { name: 'Cây 5 nhánh', key: 'tree5', desc: '6 nút, 1 tầng' },
+        { name: 'Cây 20 nút', key: 'tree20', desc: 'Phức tạp, nhiều nhánh' },
+        { name: 'Cây 100 nút', key: 'tree100', desc: 'Dây xích 1→...→100' },
+    ];
+
+    let html = '<table><tr><th>#</th><th>Test case</th><th>Mô tả</th><th>Kết quả đệ quy</th><th>Kết quả stack</th><th>Trùng khớp</th><th>Đúng mong đợi</th></tr>';
+
+    for (let i = 0; i < testCases.length; i++) {
+        const tc = testCases[i];
+        const p = presets[tc.key];
+
+        // Parse tree for this test
+        tree = {};
+        allNodes = new Set();
+        rootNode = p.root;
+        allNodes.add(rootNode);
+        tree[rootNode] = tree[rootNode] || [];
+
+        if (p.children.trim()) {
+            const lines = p.children.trim().split('\n');
+            for (const line of lines) {
+                const parts = line.split(':');
+                if (parts.length < 2) continue;
+                const parent = parseInt(parts[0].trim());
+                const children = parts[1].trim().split(/\s+/).map(Number).filter(n => !isNaN(n) && n > 0);
+                tree[parent] = children;
+                allNodes.add(parent);
+                children.forEach(c => { allNodes.add(c); if (!tree[c]) tree[c] = []; });
+            }
+        }
+
+        // Run recursive
+        const recResult = [];
+        traverseRecursive(rootNode, 0, recResult, []);
+
+        // Run stack
+        const stackData = traverseStack(rootNode);
+
+        const match = JSON.stringify(recResult) === JSON.stringify(stackData.result);
+        const expMatch = p.expected ? JSON.stringify(recResult) === JSON.stringify(p.expected) : null;
+
+        // Shorten result display for large trees
+        const maxShow = 15;
+        const recStr = recResult.length > maxShow
+            ? `[${recResult.slice(0,maxShow).join(',')},...] (${recResult.length} nút)`
+            : `[${recResult.join(',')}]`;
+        const stackStr = stackData.result.length > maxShow
+            ? `[${stackData.result.slice(0,maxShow).join(',')},...] (${stackData.result.length} nút)`
+            : `[${stackData.result.join(',')}]`;
+
+        html += `<tr>
+            <td>${i+1}</td>
+            <td><strong>${tc.name}</strong></td>
+            <td>${tc.desc}</td>
+            <td style="font-family:monospace;font-size:0.8rem;">${recStr}</td>
+            <td style="font-family:monospace;font-size:0.8rem;">${stackStr}</td>
+            <td>${match ? '<span class="badge badge-success">✅ Trùng</span>' : '<span style="color:red;">❌ Sai</span>'}</td>
+            <td>${expMatch === null ? '—' : (expMatch ? '<span class="badge badge-success">✅ Đúng</span>' : '<span style="color:red;">❌ Sai</span>')}</td>
+        </tr>`;
+    }
+
+    html += '</table>';
+
+    const allPassed = !html.includes('❌');
+    if (allPassed) {
+        html += `<div class="alert alert-success" style="margin-top:1rem;">
+            <strong>🎉 TẤT CẢ ${testCases.length} TEST CASES ĐỀU ĐÚNG!</strong><br>
+            Hai phương pháp (đệ quy và ngăn xếp) cho kết quả trùng khớp trên mọi trường hợp kiểm thử.
+        </div>`;
+    }
+
+    document.getElementById('allTestsResult').innerHTML = html;
+}
+
+// ============================================================================
+// HIỂN THỊ MÃ NGUỒN C++
+// ============================================================================
+
+function loadCppCode() {
+    const cppCode = `/*
+ * DT068 - Khử đệ quy duyệt cây bằng ngăn xếp thông minh
+ * Nguyễn Trường Tân - N24DCDT083 | GV: Hồ Nhựt Minh
+ * Chương 5, Mục 5.3.5 - Trang 129-130 (PDF 141-142)
+ */
+#include <iostream>
+#include <vector>
+#include <stack>
+using namespace std;
+
+vector<int> con[101];  // Danh sách con
+int n, goc;
+vector<int> ketqua_dequy, ketqua_stack;
+
+// ===== HÀM TIỆN ÍCH =====
+
+void in_stack(stack<int> st) {
+    cout << "  Stack: [";
+    vector<int> temp;
+    while (!st.empty()) { temp.push_back(st.top()); st.pop(); }
+    for (int i = temp.size()-1; i >= 0; i--) {
+        cout << temp[i]; if (i > 0) cout << ", ";
+    }
+    cout << "]" << endl;
+}
+
+void in_danh_sach(const vector<int>& ds) {
+    cout << "[";
+    for (int i = 0; i < (int)ds.size(); i++) {
+        cout << ds[i]; if (i < (int)ds.size()-1) cout << ",";
+    }
+    cout << "]";
+}
+
+// ===== DUYỆT ĐỆ QUY (Preorder) =====
+// Giáo trình: duyet_sau_de_quy(cay, goc)
+
+void duyet_de_quy(int node, int depth) {
+    ketqua_dequy.push_back(node);  // Thăm nút
+    for (int i = 0; i < depth; i++) cout << "  ";
+    cout << "Thăm nút " << node;
+    if (con[node].empty()) cout << " (lá)";
+    cout << " | Kết quả: "; in_danh_sach(ketqua_dequy);
+    cout << endl;
+    for (int i = 0; i < (int)con[node].size(); i++)
+        duyet_de_quy(con[node][i], depth + 1);  // Đệ quy
+}
+
+// ===== DUYỆT BẰNG NGĂN XẾP THÔNG MINH =====
+// Giáo trình: duyet_khu_de_quy(cay, goc)
+// "Phải đẩy các con vào theo thứ tự ngược lại" (reversed)
+
+void duyet_stack(int root) {
+    stack<int> st;
+    st.push(root);  // Khởi tạo
+    int buoc = 0;
+    cout << "Bước 0: Khởi tạo stack với gốc " << root << endl;
+    in_stack(st);
+    while (!st.empty()) {
+        buoc++;
+        int u = st.top(); st.pop();   // Lấy đỉnh stack
+        ketqua_stack.push_back(u);     // Thăm
+        cout << "Bước " << buoc << ": Pop " << u << " → Thăm" << endl;
+        cout << "  Kết quả: "; in_danh_sach(ketqua_stack); cout << endl;
+        // Push con NGƯỢC (reversed) → giữ đúng thứ tự
+        if (!con[u].empty()) {
+            cout << "  Con: "; in_danh_sach(con[u]);
+            cout << " → Push ngược: ";
+            for (int i = (int)con[u].size()-1; i >= 0; i--) {
+                st.push(con[u][i]);
+                cout << con[u][i]; if (i > 0) cout << ", ";
+            }
+            cout << endl;
+        } else {
+            cout << "  Nút lá" << endl;
+        }
+        in_stack(st);
+        cout << "  Độ sâu stack: " << st.size() << endl << endl;
+    }
+}
+
+// ===== SO SÁNH =====
+void so_sanh() {
+    cout << "\\nĐệ quy : "; in_danh_sach(ketqua_dequy); cout << endl;
+    cout << "Stack  : "; in_danh_sach(ketqua_stack);  cout << endl;
+    bool ok = (ketqua_dequy.size() == ketqua_stack.size());
+    if (ok) for (int i = 0; i < (int)ketqua_dequy.size(); i++)
+        if (ketqua_dequy[i] != ketqua_stack[i]) { ok = false; break; }
+    cout << (ok ? ">> TRÙNG KHỚP!" : ">> KHÔNG TRÙNG!") << endl;
+}
+
+// ===== MAIN =====
+int main() {
+    // Ví dụ 1: goc=1, con[1]=[2,3], con[2]=[4]
+    n = 4; goc = 1;
+    con[1] = {2, 3}; con[2] = {4};
+
+    cout << "=== DUYỆT ĐỆ QUY ===" << endl;
+    duyet_de_quy(goc, 0);
+
+    cout << "\\n=== DUYỆT STACK ===" << endl;
+    duyet_stack(goc);
+
+    so_sanh();
+    return 0;
+}`;
+
+    // Simple syntax highlighting
+    const highlighted = cppCode
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')
+        .replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="comment">$1</span>')
+        .replace(/\b(#include|using|namespace|void|int|bool|auto|for|while|if|else|return|const|break|do|switch|case|default)\b/g, '<span class="keyword">$1</span>')
+        .replace(/\b(cout|cin|endl|stack|vector|string|true|false|empty|push|pop|top|size|push_back|begin|end|clear)\b/g, '<span class="func">$1</span>')
+        .replace(/\b(\d+)\b/g, '<span class="number">$1</span>')
+        .replace(/"([^"]*)"/g, '<span class="string">"$1"</span>');
+
+    document.getElementById('cppCodeDisplay').innerHTML = highlighted;
+}
+
+// ============================================================================
+// KHỞI TẠO
+// ============================================================================
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Load default example
+    document.getElementById('presetSelect').value = 'ex1';
+    loadPreset();
+    runBothTraversals();
+});
+</script>
+
+</body>
+</html>
+
